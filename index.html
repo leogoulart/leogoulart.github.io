@@ -4,32 +4,87 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meu Mini App</title>
+    <title>Flappy Bird Mini App</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            margin: 0;
+            overflow: hidden;
             text-align: center;
+            background-color: #70c5ce;
         }
 
-        button {
-            padding: 10px 20px;
-            font-size: 18px;
+        canvas {
+            background: #fff;
+            display: block;
+            margin: auto;
         }
     </style>
 </head>
 
 <body>
-    <h1>Bem-vindo ao Mini App</h1>
-    <button onclick="enviarMensagem()">Enviar Mensagem</button>
-
+    <canvas id="gameCanvas" width="320" height="480"></canvas>
     <script>
-        let tg = window.Telegram.WebApp;
-        tg.expand();  // Expande a interface do mini app
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
 
-        function enviarMensagem() {
-            tg.sendData("Olá do Mini App!"); // Envia dados para o bot
+        const bird = { x: 50, y: 150, width: 20, height: 20, gravity: 0.5, velocity: 0 };
+        const pipes = [];
+        let score = 0;
+
+        function drawBird() {
+            ctx.fillStyle = "yellow";
+            ctx.fillRect(bird.x, bird.y, bird.width, bird.height);
         }
+
+        function drawPipes() {
+            ctx.fillStyle = "green";
+            pipes.forEach(pipe => {
+                ctx.fillRect(pipe.x, pipe.y, pipe.width, pipe.height);
+            });
+        }
+
+        function updateGame() {
+            bird.velocity += bird.gravity;
+            bird.y += bird.velocity;
+
+            pipes.forEach(pipe => {
+                pipe.x -= 2;
+            });
+
+            if (pipes.length === 0 || pipes[pipes.length - 1].x < 200) {
+                const gapY = Math.random() * (canvas.height - 150) + 50;
+                pipes.push({ x: canvas.width, y: 0, width: 30, height: gapY });
+                pipes.push({ x: canvas.width, y: gapY + 100, width: 30, height: canvas.height });
+            }
+
+            pipes.forEach(pipe => {
+                if (bird.x < pipe.x + pipe.width && bird.x + bird.width > pipe.x &&
+                    bird.y < pipe.y + pipe.height && bird.y + bird.height > pipe.y) {
+                    resetGame();
+                }
+            });
+
+            if (bird.y + bird.height > canvas.height || bird.y < 0) resetGame();
+        }
+
+        function resetGame() {
+            bird.y = 150;
+            bird.velocity = 0;
+            pipes.length = 0;
+            score = 0;
+        }
+
+        function gameLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawBird();
+            drawPipes();
+            updateGame();
+            requestAnimationFrame(gameLoop);
+        }
+
+        window.addEventListener("keydown", () => bird.velocity = -8);
+        gameLoop();
     </script>
 </body>
 
